@@ -1,0 +1,11 @@
+---
+# tasks file for init
+
+- name: Installing epel and openstack  repo
+  yum: 
+    name: ['epel-release','centos-release-openstack-train']
+    state: present
+
+- name: Installing the openstack client
+  yum: 
+    name: ['python-openstackclient','openstack-selinux']

@@ -1,0 +1,145 @@
+---
+# tasks file for mysql
+
+
+- name: Install the MySQL packages
+  yum:
+    name: ['mariadb-server','mariadb','MySQL-python']
+    state: present
+
+- name: Starting Mariadb
+  service:
+     name: mariadb
+     state: started
+     enabled: yes
+
+
+- name: Update MySQL root password for all root accounts
+  mysql_user: login_user=root login_password={{ mysql_root_pass }} name=root host={{ item }} password={{ mysql_root_pass }} state=present check_implicit_admin=yes 
+  with_items:
+        - "%"
+        - localhost
+        - "{{ controller_ip }}"
+        - controller
+
+- name: Copy the root credentials as .my.cnf file
+  template: src=root.cnf.j2 dest=~/.my.cnf mode=0600 
+
+- name: Copy the openstack config 
+  template: src=openstack.cnf.j2 dest=/etc/my.cnf.d/openstack.cnf
+
+- name: Ensure Anonymous user(s) are not in the database
+  mysql_user: name='' host={{ item }} state=absent 
+  with_items:
+        - localhost
+        - "%"
+        - "{{ controller_ip }}"
+        - controller
+
+- name: Remove the test database
+  mysql_db: name=test state=absent 
+
+- name: Starting Mariadb
+  service:
+     name: mariadb
+     state: restarted
+
+- name: Creating databases for services
+  mysql_db:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - keystone
+    - glance
+    - placement
+    - nova_api
+    - nova
+    - nova_cell0
+    - neutron
+
+- name: Adding the DB user with priviles on localhost
+  mysql_user: 
+     name: keystone 
+     password: "{{ mysql_service_pass }}"
+     state: present 
+     check_implicit_admin: yes
+     host:  "{{ item }}"
+     priv: 'keystone.*:ALL'
+     login_user: root 
+     login_password: "{{ mysql_root_pass }}"
+  with_items:
+        - "%"
+        - localhost
+        - "{{ controller_ip }}"
+        - controller 
+ 
+- name: Adding the DB user with priviles on localhost
+  mysql_user:
+     name: glance
+     password: "{{ mysql_service_pass }}"
+     state: present
+     check_implicit_admin: yes
+     host:  "{{ item }}"
+     priv: 'glance.*:ALL'
+     login_user: root
+     login_password: "{{ mysql_root_pass }}"
+  with_items:
+        - "%"
+        - localhost
+        - "{{ controller_ip }}"
+        - controller
+
+- name: Adding the DB user with priviles on localhost
+  mysql_user:
+     name: placement
+     password: "{{ mysql_service_pass }}"
+     state: present
+     check_implicit_admin: yes
+     host:  "{{ item }}"
+     priv: 'placement.*:ALL'
+     login_user: root
+     login_password: "{{ mysql_root_pass }}"
+  with_items:
+        - "%"
+        - localhost
+        - "{{ controller_ip }}"
+        - controller
+
+- name: Adding the DB user with priviles on localhost
+  mysql_user:
+     name: nova
+     password: "{{ mysql_service_pass }}"
+     state: present
+     check_implicit_admin: yes
+     host:  "{{ item }}"
+     priv: '*.*:ALL'
+     login_user: root
+     login_password: "{{ mysql_root_pass }}"
+  with_items:
+        - "%"
+        - localhost
+        - "{{ controller_ip }}"
+        - controller
+
+- name: Adding the DB user with priviles on localhost
+  mysql_user:
+     name: neutron
+     password: "{{ mysql_service_pass }}"
+     state: present
+     check_implicit_admin: yes
+     host:  "{{ item }}"
+     priv: 'neutron.*:ALL'
+     login_user: root
+     login_password: "{{ mysql_root_pass }}"
+  with_items:
+        - "%"
+        - localhost
+        - "{{ controller_ip }}"
+        - controller
+
+
+- name: Retarting Mariadb
+  service:
+     name: mariadb 
+     state: restarted
+

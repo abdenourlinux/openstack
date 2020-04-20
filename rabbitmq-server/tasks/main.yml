@@ -1,0 +1,19 @@
+---
+# tasks file for rabbitmq-server
+
+- name: Installing rabbitmq-server
+  yum: 
+    name: rabbitmq-server
+    state: present
+
+- name: Starting and Enabling rabbitmq-server
+  service:
+    name: rabbitmq-server
+    state: started
+    enabled: yes
+
+- name: Adding rabbitMQ user
+  command: rabbitmqctl add_user {{ rabbit_user }} {{ rabbit_pass }}
+ 
+- name: Setting permissions for {{ rabbit_user }} user
+  command: rabbitmqctl set_permissions {{ rabbit_user }} ".*" ".*" ".*"

@@ -1,0 +1,60 @@
+---
+# tasks file for nova
+
+
+- name: Creating nova user
+  shell: openstack user create --domain default --password {{ mysql_service_pass }} nova
+
+- name: Adding nova user to admin role
+  shell: openstack role add --project service --user nova admin
+
+- name: Creating nova service
+  shell: openstack service create --name nova --description "OpenStack Compute" compute
+
+ 
+- name: Creating Public EndPoints
+  shell: "openstack endpoint create --region RegionOne compute public http://controller:8774/v2.1"
+
+- name: Creating Internal EndPoints
+  shell: "openstack endpoint create --region RegionOne compute internal http://controller:8774/v2.1"
+
+- name: Creating Admin EndPoints
+  shell: "openstack endpoint create --region RegionOne compute admin http://controller:8774/v2.1"
+ 
+
+- name: Installing nova services
+  yum:
+   name: ['openstack-nova-api', 'openstack-nova-conductor', 'openstack-nova-novncproxy', 'openstack-nova-scheduler',' openstack-nova-compute']
+   state: present
+
+- name: Configuring nova service
+  template:
+    src: nova.conf.j2
+    dest: /etc/nova/nova.conf
+
+- name: Populating Nova DBs
+  shell: "{{ item }}" 
+  with_items:
+    - /bin/sh -c "nova-manage api_db sync" nova
+    - /bin/sh -c "nova-manage cell_v2 map_cell0" nova
+    - /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
+    - /bin/sh -c "nova-manage db sync" nova
+
+- name: Starting and Enabling nova services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+   - openstack-nova-api.service
+   - openstack-nova-scheduler.service
+   - openstack-nova-conductor.service
+   - openstack-nova-novncproxy.service
+   - libvirtd
+   - openstack-nova-compute
+
+
+- name: Discovering Conpute hosts
+  shell: /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
+
+

@@ -1,0 +1,5 @@
+---
+# vars file for keystone
+#mysql_service_pass : zero0000 
+#mysql_user_pass : zero0000
+#controller_ip: 192.168.7.4

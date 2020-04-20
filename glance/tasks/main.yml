@@ -1,0 +1,40 @@
+---
+# tasks file for glance
+
+
+- name: Creating Glance use
+  shell: openstack user create --domain default --password {{ mysql_service_pass }} glance
+
+- name: Adding role admi to glance user
+  shell: openstack role add --project service --user glance admin
+
+- name: Creating Glance service
+  shell: openstack service create --name glance --description "OpenStack Image" image
+
+- name: Creating Glance Public Endpointi
+  shell: openstack endpoint create --region RegionOne image public http://controller:9292
+
+- name: Creating Glance Internal Endpoint
+  shell: openstack endpoint create --region RegionOne image internal http://controller:9292
+
+- name: Creating Glance Admin Endpoint
+  shell: openstack endpoint create --region RegionOne image admin http://controller:9292
+
+- name: Installing glance packages
+  yum:
+    name: openstack-glance
+    state: present
+
+- name: Creating Glance Config
+  template:
+   src: glance-api.conf.j2
+   dest: /etc/glance/glance-api.conf
+
+- name: Populating Glance DB
+  shell: /bin/sh -c "glance-manage db_sync" glance
+
+- name: Enabling and starting Glance 
+  service:
+   name: openstack-glance-api
+   state: restarted
+   enabled: yes

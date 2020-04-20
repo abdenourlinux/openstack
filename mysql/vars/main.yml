@@ -1,0 +1,6 @@
+---
+# vars file for mysql
+
+#mysql_root_pass : zero0000 
+#mysql_service_pass : zero0000
+#controller_mgmt_ip : 192.168.7.4

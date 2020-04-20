@@ -1,0 +1,44 @@
+[database]
+# ...
+connection = mysql+pymysql://neutron:{{ mysql_service_pass }}@{{ controller_ip }}/neutron
+
+[DEFAULT]
+# ...
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = true
+transport_url = rabbit://openstack:{{ mysql_service_pass }}@controller
+auth_strategy = keystone
+notify_nova_on_port_status_changes = true
+notify_nova_on_port_data_changes = true
+
+
+[keystone_authtoken]
+# ...
+www_authenticate_uri = http://controller:5000
+auth_url = http://controller:5000
+memcached_servers = controller:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = neutron
+password = {{ mysql_service_pass }}
+
+[nova]
+# ...
+auth_url = http://controller:5000
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = RegionOne
+project_name = service
+username = nova
+password = {{ mysql_service_pass }}
+
+[oslo_concurrency]
+# ...
+lock_path = /var/lib/neutron/tmp
+
+
+

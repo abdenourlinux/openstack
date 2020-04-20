@@ -1,0 +1,74 @@
+---
+# tasks file for keystone
+
+- name: Installing services
+  yum:
+    name: ['openstack-keystone' ,'httpd' ,'mod_wsgi']
+    state: present
+
+- name: Configuring keystone
+  template:
+     src: keystone.conf.j2
+     dest: /etc/keystone/keystone.conf
+
+- name: Strting and Enabling httpd
+  service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  with_items:
+     - httpd
+     - mariadb 
+
+- name: Populating the database
+  shell: /bin/sh -c "keystone-manage db_sync" keystone 
+  #become: yes
+  #become_user: keystone
+
+- name: Initializing the Fernet key repos
+  command: "{{ item }}"
+  with_items:
+    - keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+    -  keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+
+- name: Bootstrapong the Identity service
+  command: keystone-manage bootstrap --bootstrap-password {{ mysql_service_pass }} --bootstrap-admin-url http://controller:5000/v3/ --bootstrap-internal-url http://controller:5000/v3/ --bootstrap-public-url http://controller:5000/v3/ --bootstrap-region-id RegionOne
+
+- name: Setting the server name
+  lineinfile:
+     path: /etc/httpd/conf/httpd.conf
+     regexp: ServerName www.example
+     line: ServerName controller
+
+- name: Configuring http with keystone
+  file:
+    src: /usr/share/keystone/wsgi-keystone.conf
+    dest: /etc/httpd/conf.d/wsgi-keystone.conf
+    state: link
+
+- name: Restarting and Enabling httpd
+  service:
+    name: httpd
+    state: restarted
+    enabled: yes
+
+
+- name: Creating the project service
+  shell: openstack project create --domain default --description "Service Project" service
+
+- name: Creating un-privileged project
+  shell: openstack project create --domain default --description "Demo Project" demo
+
+- name: Creating un-privileged user
+  shell: openstack user create --domain default --password {{ mysql_service_pass }} demo
+
+- name: creating the user role
+  shell: openstack role create user
+
+- name: Adding user role to demo 
+  shell: openstack role add --project demo --user demo user
+
+
+
+
+

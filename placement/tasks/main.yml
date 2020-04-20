@@ -1,0 +1,39 @@
+---
+# tasks file for placement
+
+
+- name: Creating placement user
+  shell:  openstack user create --domain default --password {{ mysql_service_pass }} placement
+
+- name: Adding Placement user to admin role
+  shell: openstack role add --project service --user placement admin
+
+- name: Creating the placement service
+  shell: openstack service create --name placement --description "Placement API" placement
+
+- name: Create Public EndPoint
+  shell: openstack endpoint create --region RegionOne placement public http://controller:8778
+
+- name: Creating internal EndPoint
+  shell: openstack endpoint create --region RegionOne placement internal http://controller:8778
+
+- name: Creating admin EndPoint
+  shell: openstack endpoint create --region RegionOne placement admin http://controller:8778
+
+- name: Installing Placement Packages
+  yum:
+    name: openstack-placement-api
+    state: present
+
+- name: Configuring Placement
+  template:
+    src: placement.conf.j2
+    dest: /etc/placement/placement.conf
+
+- name: Populatinf Placemnt DB
+  shell: /bin/sh -c "placement-manage db sync" placement
+
+- name: Restarting httpd 
+  service:
+    name: httpd
+    state: restarted

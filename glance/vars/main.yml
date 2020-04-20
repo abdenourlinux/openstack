@@ -1,0 +1,7 @@
+---
+# vars file for glance
+#mysql_service_pass : zero0000
+#mysql_user_pass : zero0000
+#mysql_root_pass: zero
+#controller_ip: 192.168.7.4
+

@@ -1,0 +1,5 @@
+---
+# vars file for rabbitmq-server
+
+rabbit_user : openstack
+rabbit_pass :  zero0000

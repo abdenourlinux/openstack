@@ -1,0 +1,28 @@
+- hosts: controller
+  vars:
+    mysql_service_pass : zero0000
+    mysql_user_pass : zero0000
+    mysql_root_pass: zero
+    controller_ip: 192.168.173.152
+    interface_name: enp0s8
+    controller_name: controller
+  roles:
+    - init
+    - mysql
+    - rabbitmq-server
+    - memcached 
+    - keystone
+    - glance
+    - placement
+    - nova
+    - neutron
+    - horizon
+
+  environment:
+      OS_USERNAME: admin
+      OS_PASSWORD: zero0000
+      OS_PROJECT_NAME: admin
+      OS_USER_DOMAIN_NAME: Default
+      OS_PROJECT_DOMAIN_NAME: Default
+      OS_AUTH_URL: "http://controller:5000/v3"
+      OS_IDENTITY_API_VERSION: 3
